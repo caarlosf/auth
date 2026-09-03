@@ -1,9 +1,16 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
 
 
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
+    password2: str
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.password != self.password2:
+            raise ValueError("Las contraseñas no coinciden")
+        return self
 
 
 class UserLogin(BaseModel):
@@ -12,7 +19,7 @@ class UserLogin(BaseModel):
 
 
 class UserResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    #model_config = ConfigDict(from_attributes=True)
 
     id: int
     email: EmailStr

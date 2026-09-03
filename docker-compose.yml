@@ -3,11 +3,11 @@ services:
     image: postgres:16
     restart: unless-stopped #si el ocntenedor se cae Docker lo vuelve a arrancar solo
     environment:
-      POSTGRES_USER: auth_user
-      POSTGRES_PASSWORD: auth_pass
-      POSTGRES_DB: auth_db
+      POSTGRES_USER: ${DB_USER} #${DB_USER} es una variable de entorno que se define en el archivo .env, igual ocn otodos los ${}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
