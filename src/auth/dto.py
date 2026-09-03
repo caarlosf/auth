@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, model_validator #ConfigDict
 
 
 class UserRegister(BaseModel):
