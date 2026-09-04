@@ -11,12 +11,16 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
+
+      # lista en la que el primer elemento le dice a docker como ejecutar lo que sigue, en este caso CMD-SHELL (-SHELL ejecuta shell)
+      # -U usuario, -d nombre de la base de datos
+      # ${} variables de entorno que se definen en el archivo .env
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 1m30s
       #Cuanto espera el comando test por la respuesta antes de darla por fallida
       timeout: 10s
       retries: 3
-      #start_period sirven para dar un pequeño margen al arrancar los servicios y omiten los fallos durante este periodo de tiempo, por ejemplo para evitar fallos mientras arranca postgres 
+      #start_period es el tiempo que espera antes de empezar a testear el servicio, para dar tiempo a que arranque correctamente
       start_period: 40s
       #start_interval es el tiempo que espera entre cada intento de testeo del servicio hasta que se detecta que esta corriendo por primera vez
       start_interval: 5s
@@ -26,13 +30,17 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    #enviroment se usa para definir variables de entorno que se pasan al contenedor al arrancarlo, en este caso coge el .env y si algo es diferente se delcara debajo, en este caso DB_HOST y DB_PORT
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
     ports:
       - "8000:8000"
     depends_on:
-      - db:
-          condition: service_healthy
-          #
-          restart: true
+      db:
+        condition: service_healthy
+        #hace que si el servicio db se reinicia, se reinicie también api, para evitar que el servicio se quede colgado esperando a que la base de datos vuelva a estar disponible
+        restart: true
 
 
 volumes:
