@@ -3,7 +3,6 @@
 .git
 __pycache__
 *.pyc
-README.md
 Dockerfile
 compose.yml
 .gitignore
