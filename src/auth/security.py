@@ -4,6 +4,8 @@ import jwt
 from pwdlib import PasswordHash
 import os
 from dotenv import load_dotenv
+import secrets
+import hashlib
 
 load_dotenv()
 SECRET_KEY = os.environ["SECRET_KEY"]
@@ -26,3 +28,11 @@ def create_access_token(user_id: int, role: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+#password reset
+def generate_reset_token() -> str:
+    return secrets.token_urlsafe(32)
+
+def hash_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
