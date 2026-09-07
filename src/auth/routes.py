@@ -10,7 +10,10 @@ from datetime import datetime, timedelta, timezone
 from src.auth.dbmodels import PasswordResetToken
 from src.auth.dto import PasswordResetRequest, PasswordResetConfirm
 from src.auth.security import generate_reset_token, hash_reset_token
-from src.auth.reset_mail import send_password_reset_email
+from src.auth.reset_mail_pass import send_password_reset_email
+
+#html basico para que funcione el enlace de mail de recuperacion de contraseña mientras no creo frontend
+from fastapi.responses import HTMLResponse
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -65,7 +68,7 @@ def confirm_password_reset(data: PasswordResetConfirm, db: Session = Depends(get
     ).first()
 
     if not token_row or token_row.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Token inválido o expirado")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Token inválido u expirado")
 
     user = db.get(User, token_row.user_id)
     user.password_hash = hash_password(data.password)
@@ -73,3 +76,41 @@ def confirm_password_reset(data: PasswordResetConfirm, db: Session = Depends(get
     db.commit()
 
     return {"message": "Contraseña actualizada correctamente"}
+
+
+
+
+#html basico para que funcione el enlace de mail de recuperacion de contraseña mientras no creo frontend
+#hace falta POST para el token al cambiar la contraseña. El enlace del email necesita GET 
+@router.get("/password-reset/confirm", response_class=HTMLResponse)
+def reset_password_form(token: str):
+    return f"""
+    <html>
+      <body>
+        <h2>Restablecer contraseña</h2>
+        <form id="resetForm">
+          <input type="password" id="password" placeholder="Nueva contraseña"><br>
+          <input type="password" id="password2" placeholder="Repite la contraseña"><br>
+          <button type="submit">Cambiar contraseña</button>
+        </form>
+        <p id="result"></p>
+
+        <script>
+          document.getElementById("resetForm").addEventListener("submit", async (e) => {{
+            e.preventDefault();
+            const res = await fetch("/auth/password-reset/confirm", {{
+              method: "POST",
+              headers: {{ "Content-Type": "application/json" }},
+              body: JSON.stringify({{
+                token: "{token}",
+                password: document.getElementById("password").value,
+                password2: document.getElementById("password2").value
+              }})
+            }});
+            const data = await res.json();
+            document.getElementById("result").innerText = data.message || data.detail || "Error inesperado";
+          }});
+        </script>
+      </body>
+    </html>
+    """

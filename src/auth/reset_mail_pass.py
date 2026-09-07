@@ -11,5 +11,5 @@ def send_password_reset_email(to_email: str, token: str) -> None:
     msg["To"] = to_email
     msg.set_content(f"Usa este enlace (válido 30 minutos):\n{reset_link}")
 
-    with smtplib.SMTP("localhost", 1025) as smtp:
+    with smtplib.SMTP("mailpit", 1025) as smtp:
         smtp.send_message(msg)
