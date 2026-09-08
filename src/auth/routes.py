@@ -86,6 +86,49 @@ def confirm_password_reset(data: PasswordResetConfirm, db: Session = Depends(get
 def reset_password_form(token: str):
     return f"""
     <html>
+      <head>
+        <style>
+          body {{
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 60px;
+          }}
+          h2 {{
+            color: #ffffff;
+          }}
+          input {{
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 6px 0;
+            width: 220px;
+          }}
+          input::placeholder {{
+            color: #888;
+          }}
+          button {{
+            background-color: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px 16px;
+            margin-top: 10px;
+            cursor: pointer;
+          }}
+          button:hover {{
+            background-color: #444;
+          }}
+          #result {{
+            color: #f0f0f0;
+          }}
+        </style>
+      </head>
       <body>
         <h2>Restablecer contraseña</h2>
         <form id="resetForm">

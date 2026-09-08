@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import String, DateTime, ForeignKey, Boolean, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.auth.database import Base
 
 
@@ -23,3 +23,19 @@ class PasswordResetToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     used: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Group(Base):
+    __tablename__ = "groups"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    users: Mapped[list["User"]] = relationship(
+        secondary="user_group", back_populates="groups"
+    )
+    permissions: Mapped[list["Permission"]] = relationship(
+        secondary="group_permission", back_populates="groups"
+    )
+
