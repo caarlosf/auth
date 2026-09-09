@@ -4,7 +4,9 @@ from sqlalchemy.orm import Session
 from src.auth.database import get_db
 from src.auth.dbmodels import User
 from src.auth.dto import UserRegister, UserLogin, UserResponse, TokenResponse
-from src.auth.security import hash_password, verify_password, create_access_token
+#permisos
+from src.auth.security import hash_password, verify_password, create_access_token, get_current_user
+#fin permisos
 
 from datetime import datetime, timedelta, timezone
 from src.auth.dbmodels import PasswordResetToken
@@ -38,8 +40,17 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Credenciales inválidas")
 
-    token = create_access_token(user_id=user.id, role=user.role)
+    #permisos: ya no se pasa role
+    token = create_access_token(user_id=user.id)
+    #fin permisos
     return TokenResponse(access_token=token)
+
+
+#permisos
+@router.get("/me", response_model=UserResponse)
+def read_me(current_user: User = Depends(get_current_user)):
+    return current_user
+#fin permisos
 
 
 #password reset
@@ -76,6 +87,68 @@ def confirm_password_reset(data: PasswordResetConfirm, db: Session = Depends(get
     db.commit()
 
     return {"message": "Contraseña actualizada correctamente"}
+
+
+
+#permisos
+from src.auth.dbmodels import Group
+from src.auth.dto import GroupCreate, GroupUpdate, GroupResponse
+#fin permisos
+
+
+#permisos
+@router.post("/groups", response_model=GroupResponse, status_code=status.HTTP_201_CREATED)
+def create_group(data: GroupCreate, db: Session = Depends(get_db)):
+    if db.query(Group).filter(Group.name == data.name).first():
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Ya existe un grupo con ese nombre")
+
+    group = Group(name=data.name, description=data.description)
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+    return group
+
+
+@router.get("/groups", response_model=list[GroupResponse])
+def list_groups(db: Session = Depends(get_db)):
+    return db.query(Group).all()
+
+
+@router.get("/groups/{group_id}", response_model=GroupResponse)
+def get_group(group_id: int, db: Session = Depends(get_db)):
+    group = db.get(Group, group_id)
+    if not group:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo no encontrado")
+    return group
+
+
+@router.put("/groups/{group_id}", response_model=GroupResponse)
+def update_group(group_id: int, data: GroupUpdate, db: Session = Depends(get_db)):
+    group = db.get(Group, group_id)
+    if not group:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo no encontrado")
+
+    if data.name is not None:
+        group.name = data.name
+    if data.description is not None:
+        group.description = data.description
+
+    db.commit()
+    db.refresh(group)
+    return group
+
+
+@router.delete("/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_group(group_id: int, db: Session = Depends(get_db)):
+    group = db.get(Group, group_id)
+    if not group:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo no encontrado")
+
+    db.delete(group)
+    db.commit()
+#fin permisos
+
+
 
 
 

@@ -23,9 +23,10 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     #model_config = ConfigDict(from_attributes=True)
 
+    #permisos: se quitó el campo role
     id: int
     email: EmailStr
-    role: str
+    #fin permisos
 
 
 class TokenResponse(BaseModel):
@@ -42,3 +43,21 @@ class PasswordResetConfirm(PasswordMatch):
     token: str
     password: str
     password2: str
+
+
+#permisos
+class GroupCreate(BaseModel):
+    name: str
+    description: str | None = None
+
+
+class GroupUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+
+
+class GroupResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+#fin permisos
