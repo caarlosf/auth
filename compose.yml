@@ -9,7 +9,7 @@ services:
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      #- pgdata:/var/lib/postgresql/data
+      #- pgdata:/var/lib/postgresql/data  falla en laversion 18
       - pgdata:/var/lib/postgresql
     healthcheck:
 
