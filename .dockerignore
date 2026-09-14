@@ -1,4 +1,5 @@
 .env
+.env.e
 .venv
 .git
 __pycache__
