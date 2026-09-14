@@ -15,17 +15,17 @@ class UserRegister(PasswordMatch):
     password2: str
 
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-
 class UserResponse(BaseModel):
     #model_config = ConfigDict(from_attributes=True)
 
     id: int
     email: EmailStr
     role: str
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
 
 class TokenResponse(BaseModel):

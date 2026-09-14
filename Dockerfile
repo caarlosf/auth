@@ -1,5 +1,5 @@
 #Imagen base
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 #Copia elementos necesarios para que funcione uv en l aimagen base
 # uno u multiples archivos de origen (/uv /uvx), sólo uno de destino (/bin/) siempre el último
