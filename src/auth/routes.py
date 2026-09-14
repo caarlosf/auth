@@ -2,9 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.auth.database import get_db
-from src.auth.dbmodels import User
-from src.auth.dto import UserRegister, UserLogin, UserResponse, TokenResponse
-from src.auth.security import hash_password, verify_password, create_access_token
+from src.auth.dbmodels import User, Group, Permission
+from src.auth.dto import (
+    UserRegister, UserLogin, UserResponse, TokenResponse,
+    GroupCreate, GroupUpdate, GroupResponse, GroupDetailResponse,
+    PermissionCreate, PermissionResponse,
+)
+from src.auth.security import (
+    hash_password, verify_password, create_access_token,
+    get_current_user, require_permission,
+)
 
 from datetime import datetime, timedelta, timezone
 from src.auth.dbmodels import PasswordResetToken
@@ -24,10 +31,19 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == data.email).first():
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email ya registrado")
 
+    is_first_user = db.query(User).count() == 0
+
     user = User(email=data.email, password_hash=hash_password(data.password))
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    if is_first_user:
+        admin_group = db.query(Group).filter(Group.name == "admin").first()
+        if admin_group:
+            user.groups.append(admin_group)
+            db.commit()
+
     return user
 
 
@@ -38,7 +54,7 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Credenciales inválidas")
 
-    token = create_access_token(user_id=user.id, role=user.role)
+    token = create_access_token(user_id=user.id)
     return TokenResponse(access_token=token)
 
 
@@ -76,6 +92,163 @@ def confirm_password_reset(data: PasswordResetConfirm, db: Session = Depends(get
     db.commit()
 
     return {"message": "Contraseña actualizada correctamente"}
+
+#inicio permisos
+#grupos
+groups_router = APIRouter(prefix="/groups", tags=["groups"])
+
+
+@groups_router.post(
+    "", response_model=GroupResponse,
+    dependencies=[Depends(require_permission("groups:manage"))],
+)
+def create_group(data: GroupCreate, db: Session = Depends(get_db)):
+    if db.query(Group).filter(Group.name == data.name).first():
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Ya existe un grupo con ese nombre")
+    group = Group(name=data.name, description=data.description)
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+    return group
+
+
+@groups_router.get("", response_model=list[GroupResponse])
+def list_groups(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    return db.query(Group).all()
+
+
+@groups_router.get("/{group_id}", response_model=GroupDetailResponse)
+def get_group(group_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    group = db.get(Group, group_id)
+    if not group:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo no encontrado")
+    return group
+
+
+@groups_router.patch(
+    "/{group_id}", response_model=GroupResponse,
+    dependencies=[Depends(require_permission("groups:manage"))],
+)
+def update_group(group_id: int, data: GroupUpdate, db: Session = Depends(get_db)):
+    group = db.get(Group, group_id)
+    if not group:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo no encontrado")
+    group.name = data.name
+    group.description = data.description
+    db.commit()
+    db.refresh(group)
+    return group
+
+
+@groups_router.delete(
+    "/{group_id}", status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_permission("groups:manage"))],
+)
+def delete_group(group_id: int, db: Session = Depends(get_db)):
+    group = db.get(Group, group_id)
+    if not group:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo no encontrado")
+    db.delete(group)
+    db.commit()
+
+
+@groups_router.post(
+    "/{group_id}/permissions/{permission_id}", response_model=GroupDetailResponse,
+    dependencies=[Depends(require_permission("groups:manage"))],
+)
+def add_permission_to_group(group_id: int, permission_id: int, db: Session = Depends(get_db)):
+    group = db.get(Group, group_id)
+    permission = db.get(Permission, permission_id)
+    if not group or not permission:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo o permiso no encontrado")
+    if permission not in group.permissions:
+        group.permissions.append(permission)
+        db.commit()
+        db.refresh(group)
+    return group
+
+
+@groups_router.delete(
+    "/{group_id}/permissions/{permission_id}", response_model=GroupDetailResponse,
+    dependencies=[Depends(require_permission("groups:manage"))],
+)
+def remove_permission_from_group(group_id: int, permission_id: int, db: Session = Depends(get_db)):
+    group = db.get(Group, group_id)
+    permission = db.get(Permission, permission_id)
+    if not group or not permission:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo o permiso no encontrado")
+    if permission in group.permissions:
+        group.permissions.remove(permission)
+        db.commit()
+        db.refresh(group)
+    return group
+
+
+@groups_router.post(
+    "/{group_id}/users/{user_id}",
+    dependencies=[Depends(require_permission("groups:manage"))],
+)
+def add_user_to_group(group_id: int, user_id: int, db: Session = Depends(get_db)):
+    group = db.get(Group, group_id)
+    target_user = db.get(User, user_id)
+    if not group or not target_user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo o usuario no encontrado")
+    if group not in target_user.groups:
+        target_user.groups.append(group)
+        db.commit()
+    return {"message": "Usuario añadido al grupo"}
+
+
+@groups_router.delete(
+    "/{group_id}/users/{user_id}",
+    dependencies=[Depends(require_permission("groups:manage"))],
+)
+def remove_user_from_group(group_id: int, user_id: int, db: Session = Depends(get_db)):
+    group = db.get(Group, group_id)
+    target_user = db.get(User, user_id)
+    if not group or not target_user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Grupo o usuario no encontrado")
+    if group in target_user.groups:
+        target_user.groups.remove(group)
+        db.commit()
+    return {"message": "Usuario quitado del grupo"}
+
+
+#permisos
+permissions_router = APIRouter(prefix="/permissions", tags=["permissions"])
+
+
+@permissions_router.post(
+    "", response_model=PermissionResponse,
+    dependencies=[Depends(require_permission("permissions:manage"))],
+)
+def create_permission(data: PermissionCreate, db: Session = Depends(get_db)):
+    if db.query(Permission).filter(Permission.codename == data.codename).first():
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Ya existe un permiso con ese codename")
+    permission = Permission(codename=data.codename, description=data.description)
+    db.add(permission)
+    db.commit()
+    db.refresh(permission)
+    return permission
+
+
+@permissions_router.get("", response_model=list[PermissionResponse])
+def list_permissions(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    return db.query(Permission).all()
+
+
+@permissions_router.delete(
+    "/{permission_id}", status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_permission("permissions:manage"))],
+)
+def delete_permission(permission_id: int, db: Session = Depends(get_db)):
+    permission = db.get(Permission, permission_id)
+    if not permission:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Permiso no encontrado")
+    db.delete(permission)
+    db.commit()
+
+#fin permisos
 
 
 

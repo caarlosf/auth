@@ -20,7 +20,6 @@ class UserResponse(BaseModel):
 
     id: int
     email: EmailStr
-    role: str
 
 
 class UserLogin(BaseModel):
@@ -42,3 +41,36 @@ class PasswordResetConfirm(PasswordMatch):
     token: str
     password: str
     password2: str
+
+
+#grupos
+class GroupCreate(BaseModel):
+    name: str
+    description: str
+
+
+class GroupUpdate(BaseModel):
+    name: str
+    description: str
+
+
+class GroupResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+
+
+#permisos
+class PermissionCreate(BaseModel):
+    codename: str
+    description: str
+
+
+class PermissionResponse(BaseModel):
+    id: int
+    codename: str
+    description: str
+
+
+class GroupDetailResponse(GroupResponse):
+    permissions: list[PermissionResponse] = []
