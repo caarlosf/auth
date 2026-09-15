@@ -35,5 +35,7 @@ RUN uv sync
 ENV PATH="/app/.venv/bin:$PATH"
 
 #Instruccion para ejecutar como primer comando al arrancar el contenedor, formato de lista
+#este lo hace en modo dev
 #CMD ["uv", "run", "fastapi", "run", "src/auth/main.py", "--host", "0.0.0.0", "--port", "8000"]
+#arranque bueno
 CMD ["/app/.venv/bin/uvicorn", "src.auth.main:app", "--host", "0.0.0.0", "--port", "8000"]
