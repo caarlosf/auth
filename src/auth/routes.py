@@ -100,6 +100,7 @@ groups_router = APIRouter(prefix="/groups", tags=["groups"])
 
 @groups_router.post(
     "", response_model=GroupResponse,
+    #comprueba el token del usuario y si tiene el permiso, permite ejecutar la funcion, sino devuelve 403 de require_permission en security.py
     dependencies=[Depends(require_permission("groups:manage"))],
 )
 def create_group(data: GroupCreate, db: Session = Depends(get_db)):

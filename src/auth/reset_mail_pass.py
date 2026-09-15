@@ -17,7 +17,7 @@ def send_password_reset_email(to_email: str, token: str) -> None:
 
     msg = EmailMessage()
     msg["Subject"] = "Restablece tu contraseña"
-    msg["From"] = "no-reply@tuapp.com"
+    msg["From"] = EMAIL_USER
     msg["To"] = to_email
     msg.set_content(f"Usa este enlace (válido 30 minutos):\n{reset_link}")
 

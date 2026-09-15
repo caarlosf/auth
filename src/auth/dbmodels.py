@@ -15,6 +15,7 @@ class User(Base):
     groups: Mapped[list["Group"]] = relationship(
         secondary="user_group", back_populates="users"
     )
+    
 
 #passwsord reset
 class PasswordResetToken(Base):
@@ -33,7 +34,7 @@ class Group(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
 
     #cuando se pidan los usuarios de groups
     users: Mapped[list["User"]] = relationship(
@@ -51,7 +52,7 @@ class Permission(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     codename: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
 
     #cuando se pidan los grupos de este permiso
     groups: Mapped[list["Group"]] = relationship(

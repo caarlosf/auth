@@ -9,7 +9,7 @@ import hashlib
 
 #permisos
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+#from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from src.auth.database import get_db
@@ -25,7 +25,7 @@ password_hash = PasswordHash.recommended()
 
 #permisos
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+#oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 #permisos
 
 
@@ -55,7 +55,7 @@ def hash_reset_token(token: str) -> str:
 #permisos
 #averigua que usuario ha hecho la peticion, a partir del token del header Authorization
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: str,
     db: Session = Depends(get_db),
 ) -> User:
     credentials_error = HTTPException(
