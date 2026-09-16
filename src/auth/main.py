@@ -18,8 +18,15 @@ def primer_admin_group():
             db.add(admin_group)
 
         for codename, description in [
-            ("groups:manage", "Crear, editar y borrar grupos. Gestionar los miembros y permisos de los grupos"),
-            ("permissions:manage", "Crear y borrar permisos"),
+            ("groups:create", "Crear grupos nuevos"),
+            ("groups:update", "Editar grupos existentes"),
+            ("groups:delete", "Borrar grupos"),
+            ("groups:members:add", "Añadir usuarios a un grupo"),
+            ("groups:members:remove", "Quitar usuarios de un grupo"),
+            ("groups:permissions:add", "Añadir permisos a un grupo"),
+            ("groups:permissions:remove", "Quitar permisos de un grupo"),
+            ("permissions:create", "Crear permisos nuevos"),
+            ("permissions:delete", "Borrar permisos"),
         ]:
             permission = db.query(Permission).filter(Permission.codename == codename).first()
             if not permission:

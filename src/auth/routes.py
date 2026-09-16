@@ -101,7 +101,7 @@ groups_router = APIRouter(prefix="/groups", tags=["groups"])
 @groups_router.post(
     "", response_model=GroupResponse,
     #comprueba el token del usuario y si tiene el permiso, permite ejecutar la funcion, sino devuelve 403 de require_permission en security.py
-    dependencies=[Depends(require_permission("groups:manage"))],
+    dependencies=[Depends(require_permission("groups:create"))],
 )
 def create_group(data: GroupCreate, db: Session = Depends(get_db)):
     if db.query(Group).filter(Group.name == data.name).first():
@@ -128,7 +128,7 @@ def get_group(group_id: int, db: Session = Depends(get_db), user: User = Depends
 
 @groups_router.patch(
     "/{group_id}", response_model=GroupResponse,
-    dependencies=[Depends(require_permission("groups:manage"))],
+    dependencies=[Depends(require_permission("groups:update"))],
 )
 def update_group(group_id: int, data: GroupUpdate, db: Session = Depends(get_db)):
     group = db.get(Group, group_id)
@@ -143,7 +143,7 @@ def update_group(group_id: int, data: GroupUpdate, db: Session = Depends(get_db)
 
 @groups_router.delete(
     "/{group_id}", status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("groups:manage"))],
+    dependencies=[Depends(require_permission("groups:delete"))],
 )
 def delete_group(group_id: int, db: Session = Depends(get_db)):
     group = db.get(Group, group_id)
@@ -155,7 +155,7 @@ def delete_group(group_id: int, db: Session = Depends(get_db)):
 
 @groups_router.post(
     "/{group_id}/permissions/{permission_id}", response_model=GroupDetailResponse,
-    dependencies=[Depends(require_permission("groups:manage"))],
+    dependencies=[Depends(require_permission("groups:permissions:add"))],
 )
 def add_permission_to_group(group_id: int, permission_id: int, db: Session = Depends(get_db)):
     group = db.get(Group, group_id)
@@ -171,7 +171,7 @@ def add_permission_to_group(group_id: int, permission_id: int, db: Session = Dep
 
 @groups_router.delete(
     "/{group_id}/permissions/{permission_id}", response_model=GroupDetailResponse,
-    dependencies=[Depends(require_permission("groups:manage"))],
+    dependencies=[Depends(require_permission("groups:permissions:remove"))],
 )
 def remove_permission_from_group(group_id: int, permission_id: int, db: Session = Depends(get_db)):
     group = db.get(Group, group_id)
@@ -187,7 +187,7 @@ def remove_permission_from_group(group_id: int, permission_id: int, db: Session 
 
 @groups_router.post(
     "/{group_id}/users/{user_id}",
-    dependencies=[Depends(require_permission("groups:manage"))],
+    dependencies=[Depends(require_permission("groups:members:add"))],
 )
 def add_user_to_group(group_id: int, user_id: int, db: Session = Depends(get_db)):
     group = db.get(Group, group_id)
@@ -202,7 +202,7 @@ def add_user_to_group(group_id: int, user_id: int, db: Session = Depends(get_db)
 
 @groups_router.delete(
     "/{group_id}/users/{user_id}",
-    dependencies=[Depends(require_permission("groups:manage"))],
+    dependencies=[Depends(require_permission("groups:members:remove"))],
 )
 def remove_user_from_group(group_id: int, user_id: int, db: Session = Depends(get_db)):
     group = db.get(Group, group_id)
@@ -221,7 +221,7 @@ permissions_router = APIRouter(prefix="/permissions", tags=["permissions"])
 
 @permissions_router.post(
     "", response_model=PermissionResponse,
-    dependencies=[Depends(require_permission("permissions:manage"))],
+    dependencies=[Depends(require_permission("permissions:create"))],
 )
 def create_permission(data: PermissionCreate, db: Session = Depends(get_db)):
     if db.query(Permission).filter(Permission.codename == data.codename).first():
@@ -240,7 +240,7 @@ def list_permissions(db: Session = Depends(get_db), user: User = Depends(get_cur
 
 @permissions_router.delete(
     "/{permission_id}", status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_permission("permissions:manage"))],
+    dependencies=[Depends(require_permission("permissions:delete"))],
 )
 def delete_permission(permission_id: int, db: Session = Depends(get_db)):
     permission = db.get(Permission, permission_id)

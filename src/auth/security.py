@@ -8,8 +8,7 @@ import secrets
 import hashlib
 
 #permisos
-from fastapi import Depends, HTTPException, status
-#from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.auth.database import get_db
@@ -22,11 +21,6 @@ ALGORITHM = os.environ["ALGORITHM"]
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"])
 
 password_hash = PasswordHash.recommended()
-
-#permisos
-
-#oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
-#permisos
 
 
 def hash_password(password: str) -> str:
@@ -55,7 +49,7 @@ def hash_reset_token(token: str) -> str:
 #permisos
 #averigua que usuario ha hecho la peticion, a partir del token del header Authorization
 def get_current_user(
-    token: str,
+    authorization: str = Header(...),
     db: Session = Depends(get_db),
 ) -> User:
     credentials_error = HTTPException(
@@ -63,6 +57,11 @@ def get_current_user(
         "No se pudo validar el token",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if not authorization.startswith("Bearer "):
+        raise credentials_error
+    token = authorization.removeprefix("Bearer ")
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
