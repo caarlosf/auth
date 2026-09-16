@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from src.auth.database import Base, engine, SessionLocal
 #from src.auth import dbmodels
 from src.auth.dbmodels import Group, Permission
-from src.auth.routes import router as auth_router, groups_router, permissions_router
+from src.auth.routes import router as auth_router, groups_router, permissions_router, users_router
 
 Base.metadata.create_all(engine)
 
@@ -27,6 +27,7 @@ def primer_admin_group():
             ("groups:permissions:remove", "Quitar permisos de un grupo"),
             ("permissions:create", "Crear permisos nuevos"),
             ("permissions:delete", "Borrar permisos"),
+            ("users:read", "Ver información de un usuario y sus grupos"),
         ]:
             permission = db.query(Permission).filter(Permission.codename == codename).first()
             if not permission:
@@ -48,4 +49,5 @@ app.include_router(auth_router)
 #inicio permisos
 app.include_router(groups_router)
 app.include_router(permissions_router)
+app.include_router(users_router)
 #fin permisos

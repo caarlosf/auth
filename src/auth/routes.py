@@ -6,7 +6,7 @@ from src.auth.dbmodels import User, Group, Permission
 from src.auth.dto import (
     UserRegister, UserLogin, UserResponse, TokenResponse,
     GroupCreate, GroupUpdate, GroupResponse, GroupDetailResponse,
-    PermissionCreate, PermissionResponse,
+    PermissionCreate, PermissionResponse, UserDetailResponse,
 )
 from src.auth.security import (
     hash_password, verify_password, create_access_token,
@@ -251,7 +251,21 @@ def delete_permission(permission_id: int, db: Session = Depends(get_db)):
 
 #fin permisos
 
+#grupos a los que pertenecen un usuarios
+users_router = APIRouter(prefix="/users", tags=["users"])
 
+
+@users_router.get(
+    "/{user_id}", response_model=UserDetailResponse,
+    dependencies=[Depends(require_permission("users:read"))],
+)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Usuario no encontrado")
+    return user
+
+#fin grupos a los que pertenecen un usuarios
 
 
 #html basico para que funcione el enlace de mail de recuperacion de contraseña mientras no creo frontend

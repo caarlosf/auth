@@ -75,3 +75,8 @@ class PermissionResponse(BaseModel):
 #responde el grupo con una lista de sus permisos
 class GroupDetailResponse(GroupResponse):
     permissions: list[PermissionResponse] = []
+
+
+#responde el usuario con una lista de sus grupos
+class UserDetailResponse(UserResponse):
+    groups: list[GroupResponse] = []
